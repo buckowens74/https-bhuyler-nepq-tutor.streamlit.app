@@ -1,56 +1,80 @@
 import streamlit as st
 from openai import OpenAI
 
-st.set_page_config(page_title="NEPQ AI Tutor • Smart Quiz Fixed", layout="wide")
-st.title("🧠 NEPQ Black Book AI Tutor • Quiz Now Fully Working 🔥")
-st.success("✅ API Connected • Quiz is now dynamic and smart")
+st.set_page_config(page_title="NEPQ AI Tutor • Fully Fixed", layout="wide")
+st.title("🧠 NEPQ Black Book AI Tutor • Fully Working & Easy to Use 🔥")
+st.success("✅ Everything fixed • Click the top buttons to switch modes")
 
 api_key = st.secrets["API_KEY"]
 client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1" if api_key.startswith("gsk") else None)
 
-# Quiz state
-if "q_number" not in st.session_state:
-    st.session_state.q_number = 1
+# Top Mode Selector
+mode = st.radio("Select Mode 👇", 
+                ["📖 Guided Lesson", "🎭 Role-Play Simulator", "💬 Ask Tutor Anything", "❓ Quiz & Test"], 
+                horizontal=True, label_visibility="visible")
 
-questions = [
-    "What is the real purpose of the first 7-12 seconds in every sales call?",
-    "Name the 5 stages of NEPQ in the correct order.",
-    "What is the main difference between Era #2 (Consultative) and Era #3 (NEPQ)?",
-    "Why should you never sell to what the prospect says they 'need'?",
-    "Give an example of a strong Consequence question from the book."
-]
-
-st.subheader(f"❓ Quiz & Test • Week 1 • Question {st.session_state.q_number} of 5")
-
-st.write("**" + questions[st.session_state.q_number - 1] + "**")
-
-user_answer = st.text_area("Type your answer here", height=120, key=f"answer_{st.session_state.q_number}")
-
-col1, col2, col3 = st.columns(3)
-if col1.button("✅ Check My Answer"):
-    with st.spinner("Grading with real NEPQ tutor..."):
-        feedback = client.chat.completions.create(
-            model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
-            messages=[{"role": "user", "content": f"Grade this NEPQ answer like a strict but encouraging coach. Question: {questions[st.session_state.q_number - 1]} Student answer: '{user_answer}'. Give score 1-10, explain what they got right/wrong, and teach the correct concept from the Black Book."}]
-        )
-        st.success(feedback.choices[0].message.content)
-
-if col2.button("➡️ Next Question"):
-    st.session_state.q_number += 1
-    if st.session_state.q_number > 5:
-        st.session_state.q_number = 1
-        st.balloons()
-        st.success("🎉 Quiz complete! You finished all 5 questions.")
-    st.rerun()
-
-if col3.button("🔄 Reset Quiz"):
-    st.session_state.q_number = 1
-    st.rerun()
-
-st.caption("The quiz now actually advances! Try answering Question 1, click Check, then click Next Question.")
-
-# Keep other modes available
 st.divider()
-mode = st.radio("Switch Mode", ["📖 Lesson", "🎭 Role-Play", "💬 Ask Tutor"], horizontal=True)
-if mode == "🎭 Role-Play":
-    st.info("Go to Role-Play mode above and test it too — it's fully working.")
+
+if mode == "📖 Guided Lesson":
+    st.subheader("📖 Today's Lesson • Week 1")
+    st.write("**Focus:** The first 7-12 seconds + Connection Questions (pages 17-24)")
+    if st.button("Give me script + practice drill"):
+        with st.spinner("Tutor preparing..."):
+            r = client.chat.completions.create(model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
+                messages=[{"role": "user", "content": "Give a clear example of a NEPQ Connection script for an inbound lead + 3 practice lines"}])
+            st.success(r.choices[0].message.content)
+
+elif mode == "🎭 Role-Play Simulator":
+    st.subheader("🎭 Role-Play Simulator")
+    scenario = st.selectbox("Choose scenario", ["Inbound Zoom - Life Insurance", "Cold Call - Auto", "Solar Consequence", "Objection: I need to think"])
+    your_line = st.text_area("Type what YOU would say:")
+    if st.button("🚀 Send my line → AI plays Prospect + Coaches"):
+        with st.spinner("Prospect responding..."):
+            r = client.chat.completions.create(model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
+                messages=[{"role": "user", "content": f"NEPQ role-play. Scenario: {scenario}. Salesperson just said: '{your_line}'. Respond as prospect then coach using Black Book."}])
+            st.markdown("**Prospect:** " + r.choices[0].message.content)
+
+elif mode == "💬 Ask Tutor Anything":
+    st.subheader("💬 Ask the NEPQ Tutor")
+    q = st.chat_input("Example: How do I ask a good Consequence question for HVAC?")
+    if q:
+        with st.spinner("Tutor answering..."):
+            r = client.chat.completions.create(model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
+                messages=[{"role": "user", "content": f"Expert NEPQ tutor answer: {q}"}])
+            st.success(r.choices[0].message.content)
+
+elif mode == "❓ Quiz & Test":
+    st.subheader("❓ Quiz & Test")
+    
+    # Quiz logic
+    if "q_num" not in st.session_state:
+        st.session_state.q_num = 1
+    
+    qs = [
+        "What is the purpose of the first 7-12 seconds?",
+        "Name the 5 stages of NEPQ in order.",
+        "What is the difference between Era #2 and Era #3?",
+        "Why do we use verbal pauses (...) ?",
+        "Give an example of a strong Problem Awareness question."
+    ]
+    
+    st.write(f"**Question {st.session_state.q_num}/5:** {qs[st.session_state.q_num-1]}")
+    ans = st.text_area("Your answer", height=100)
+    
+    col1, col2 = st.columns(2)
+    if col1.button("✅ Check My Answer"):
+        with st.spinner("Grading..."):
+            fb = client.chat.completions.create(model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
+                messages=[{"role": "user", "content": f"Grade this answer strictly but encouragingly. Question: {qs[st.session_state.q_num-1]} Answer: '{ans}'. Score + explanation + correct teaching from Black Book."}])
+            st.success(fb.choices[0].message.content)
+    
+    if col2.button("➡️ Next Question"):
+        st.session_state.q_num += 1
+        if st.session_state.q_num > 5:
+            st.session_state.q_num = 1
+            st.balloons()
+            st.success("🎉 You completed the full quiz!")
+        st.rerun()
+
+st.caption("✅ Modes should now switch instantly. Try clicking each top button.")
+st.info("💡 Best test: Switch to Role-Play → type a line → click the send button")
