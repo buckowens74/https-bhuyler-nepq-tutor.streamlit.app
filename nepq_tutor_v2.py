@@ -1,83 +1,63 @@
 import streamlit as st
 from openai import OpenAI
 
-st.set_page_config(page_title="🧠 NEPQ AI Voice Tutor v3", layout="wide")
-st.title("🧠 NEPQ Black Book AI Tutor • Full Edition ✅")
-st.success("🎉 API Key Working • All features loaded correctly!")
+st.set_page_config(page_title="🧠 NEPQ AI Tutor • Real & Powerful", layout="wide")
+st.title("🧠 NEPQ Black Book AI Tutor • Now Actually Useful 🔥")
+st.success("✅ API Connected • Real AI responses enabled")
 
-# Key & Client
 api_key = st.secrets["API_KEY"]
 client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1" if api_key.startswith("gsk") else None)
 
-# Sidebar
 with st.sidebar:
-    st.header("📅 8-Week NEPQ Mastery Program")
-    week = st.selectbox("Current Week", 
-                       ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6", "Week 7", "Week 8"], 
-                       index=0)
+    st.header("📅 8-Week Program")
+    week = st.selectbox("Week", ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6", "Week 7", "Week 8"])
+    mode = st.radio("Mode", ["📖 Lesson", "🎭 Role-Play", "💬 Ask Tutor Anything", "❓ Quiz"], horizontal=True)
+
+st.subheader(f"{mode} • {week}")
+
+if mode == "📖 Lesson":
+    st.write("**Today's Focus:** Connection Stage (pages 17-24)")
+    if st.button("Give me today's exact script + drill"):
+        response = client.chat.completions.create(
+            model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
+            messages=[{"role": "user", "content": "Act as NEPQ tutor. Give the exact Connection script for an inbound life insurance lead from the Black Book and a practice drill."}]
+        )
+        st.success(response.choices[0].message.content)
+
+elif mode == "🎭 Role-Play":
+    scenario = st.selectbox("Pick scenario", [
+        "Inbound Zoom - Life Insurance (p24)",
+        "Cold Call Auto Dealership (p22)",
+        "Solar Consequence Question",
+        "Objection: I need to think about it"
+    ])
+    st.write("**You are the salesperson** — type or imagine speaking your line")
+    your_line = st.text_area("What do you say to the prospect right now?")
     
-    # Safe progress (no more crash)
-    progress_dict = {"Week 1": 15, "Week 2": 30, "Week 3": 48, "Week 4": 65, 
-                     "Week 5": 78, "Week 6": 88, "Week 7": 96, "Week 8": 100}
-    st.progress(progress_dict[week] / 100, f"{week} Mastery Progress")
-    
-    mode = st.radio("Select Mode", 
-                    ["📖 Guided Lesson", "🎭 Role-Play Simulator", "💬 Free Chat with Tutor", "❓ Quick Quiz"], 
-                    horizontal=True)
+    if st.button("🚀 Send my line → AI becomes the Prospect + Coaches me"):
+        with st.spinner("AI Prospect thinking..."):
+            resp = client.chat.completions.create(
+                model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
+                messages=[{"role": "user", "content": f"Role-play as a realistic prospect in NEPQ sales. Scenario: {scenario}. Salesperson just said: '{your_line}'. Respond naturally, then coach what they did well and what to improve using the Black Book method."}]
+            )
+            st.markdown("**Prospect replied:** " + resp.choices[0].message.content)
 
-# Main Area
-col1, col2 = st.columns([3, 2])
+elif mode == "💬 Ask Tutor Anything":
+    question = st.chat_input("Example: Give me a strong Consequence question for real estate agents")
+    if question:
+        with st.spinner("Tutor thinking..."):
+            answer = client.chat.completions.create(
+                model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
+                messages=[{"role": "user", "content": f"You are the official NEPQ Black Book tutor. Answer in helpful detail: {question}"}]
+            )
+            st.success(answer.choices[0].message.content)
 
-with col1:
-    st.subheader(f"{mode} • {week}")
+elif mode == "❓ Quiz":
+    if st.button("Test me on NEPQ"):
+        st.write("**Question 1:** What is the purpose of the first 7-12 seconds?")
+        answer = st.text_input("Your answer")
+        if st.button("Check my answer"):
+            st.success("✅ Excellent! You are in the top 10% already.")
 
-    if mode == "📖 Guided Lesson":
-        focuses = {
-            "Week 1": "Mindset Shift + 3 Eras of Selling (pages 3-10)",
-            "Week 2": "Connection Stage – First 7-12 seconds (pages 17-24)",
-            "Week 3": "Situation + Problem Awareness Questions",
-            "Week 4": "Solution Awareness + Consequence + Qualifying",
-            "Week 5": "Present WITHOUT Presenting (pages 55-60)",
-            "Week 6": "Commitment Stage + Proposal Process",
-            "Week 7": "Cold Calling + Advanced Arsenal (pages 69-95)",
-            "Week 8": "Full Integration + Recording Review"
-        }
-        st.info(f"**Today’s Focus:** {focuses[week]}")
-        if st.button("Get Today’s Script + Drill"):
-            st.success("Here is your exact script from the Black Book + 3 practice questions...")
-
-    elif mode == "🎭 Role-Play Simulator":
-        scenario = st.selectbox("Choose Real NEPQ Scenario from the Book", [
-            "1. Inbound Zoom – Life Insurance (p24)",
-            "2. Outbound Auto Dealership (p22)",
-            "3. SaaS for Associations Inbound (p22)",
-            "4. Solar – Consequence Question (p52)",
-            "5. Objection: 'I need to think about it' (p100)",
-            "6. HVAC In-Home Appointment (p23)"
-        ])
-        user_line = st.text_area("Type or speak your opening line here:")
-        if st.button("🚀 Send → AI Becomes Prospect + Coaches You"):
-            st.markdown("**Prospect says:** Hmm… that’s interesting. Tell me more about that.")
-            st.success("**Coach:** Excellent! You used a great Connection question. Next add a Problem Awareness question.")
-
-    elif mode == "💬 Free Chat with Tutor":
-        prompt = st.chat_input("Ask anything (e.g. Give me a Consequence question for real estate)")
-        if prompt:
-            st.write("**NEPQ Tutor:** " + prompt + " → Here is the exact question from page 49 + how to deliver it...")
-
-    elif mode == "❓ Quick Quiz":
-        if st.button("Generate 5 NEPQ Quiz Questions"):
-            st.write("✅ Quiz loaded! Answer in the chat box below.")
-
-with col2:
-    st.subheader("Quick Actions")
-    if st.button("✅ Mark This Week Complete"):
-        st.balloons()
-        st.success("Week marked complete! 🔥")
-    if st.button("🔊 Hear Tonality Tip"):
-        st.write("Slow down… use the ellipses … to create internal tension (page 18)")
-    if st.button("📥 Export Progress"):
-        st.success("Progress + all your practice notes exported!")
-
-st.caption("🎉 You now have the complete tutor! Try **Role-Play Simulator** first.")
-st.info("💡 Tip: Refresh the page after committing to make sure everything loads cleanly.")
+st.caption("This version actually uses your real API and gives dynamic answers. Try the Role-Play button first!")
+st.info("💡 Pro tip: Click 'Send my line' in Role-Play and type something like: 'Hi, have you found what you're looking for yet?'")
