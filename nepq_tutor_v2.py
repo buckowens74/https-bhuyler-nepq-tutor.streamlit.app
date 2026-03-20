@@ -1,63 +1,56 @@
 import streamlit as st
 from openai import OpenAI
 
-st.set_page_config(page_title="🧠 NEPQ AI Tutor • Real & Powerful", layout="wide")
-st.title("🧠 NEPQ Black Book AI Tutor • Now Actually Useful 🔥")
-st.success("✅ API Connected • Real AI responses enabled")
+st.set_page_config(page_title="NEPQ AI Tutor • Smart & Interactive", layout="wide")
+st.title("🧠 NEPQ Black Book AI Tutor • Now Smart & Interactive 🔥")
+st.success("✅ Fully working • AI answers in every mode")
 
 api_key = st.secrets["API_KEY"]
 client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1" if api_key.startswith("gsk") else None)
 
 with st.sidebar:
-    st.header("📅 8-Week Program")
     week = st.selectbox("Week", ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6", "Week 7", "Week 8"])
-    mode = st.radio("Mode", ["📖 Lesson", "🎭 Role-Play", "💬 Ask Tutor Anything", "❓ Quiz"], horizontal=True)
+    mode = st.radio("Mode", ["📖 Lesson", "🎭 Role-Play", "💬 Ask Tutor", "❓ Quiz & Test"], horizontal=True)
 
 st.subheader(f"{mode} • {week}")
 
 if mode == "📖 Lesson":
-    st.write("**Today's Focus:** Connection Stage (pages 17-24)")
-    if st.button("Give me today's exact script + drill"):
-        response = client.chat.completions.create(
-            model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
-            messages=[{"role": "user", "content": "Act as NEPQ tutor. Give the exact Connection script for an inbound life insurance lead from the Black Book and a practice drill."}]
-        )
-        st.success(response.choices[0].message.content)
+    st.write("**Today:** Connection Stage – First 7-12 seconds (pages 17-24)")
+    if st.button("Give me script + practice"):
+        with st.spinner("Tutor preparing..."):
+            resp = client.chat.completions.create(model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
+                messages=[{"role": "user", "content": "Give a clear Connection script example for an inbound lead + 3 practice lines from the NEPQ Black Book"}])
+            st.success(resp.choices[0].message.content)
 
 elif mode == "🎭 Role-Play":
-    scenario = st.selectbox("Pick scenario", [
-        "Inbound Zoom - Life Insurance (p24)",
-        "Cold Call Auto Dealership (p22)",
-        "Solar Consequence Question",
-        "Objection: I need to think about it"
-    ])
-    st.write("**You are the salesperson** — type or imagine speaking your line")
-    your_line = st.text_area("What do you say to the prospect right now?")
-    
-    if st.button("🚀 Send my line → AI becomes the Prospect + Coaches me"):
-        with st.spinner("AI Prospect thinking..."):
-            resp = client.chat.completions.create(
-                model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
-                messages=[{"role": "user", "content": f"Role-play as a realistic prospect in NEPQ sales. Scenario: {scenario}. Salesperson just said: '{your_line}'. Respond naturally, then coach what they did well and what to improve using the Black Book method."}]
-            )
-            st.markdown("**Prospect replied:** " + resp.choices[0].message.content)
+    scenario = st.selectbox("Scenario", ["Inbound Life Insurance", "Cold Call Auto", "Solar Consequence", "Objection Drill"])
+    your_line = st.text_area("Type what YOU say to the prospect:")
+    if st.button("🚀 Send → Let AI play the Prospect + Coach me"):
+        with st.spinner("Prospect is responding..."):
+            resp = client.chat.completions.create(model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
+                messages=[{"role": "user", "content": f"NEPQ Role-play. Scenario: {scenario}. Salesperson said: '{your_line}'. Respond as a real prospect, then coach using Black Book principles."}])
+            st.markdown("**Prospect:** " + resp.choices[0].message.content)
 
-elif mode == "💬 Ask Tutor Anything":
-    question = st.chat_input("Example: Give me a strong Consequence question for real estate agents")
-    if question:
+elif mode == "💬 Ask Tutor":
+    q = st.chat_input("Ask anything (e.g. How do I ask a good Consequence question?)")
+    if q:
         with st.spinner("Tutor thinking..."):
-            answer = client.chat.completions.create(
-                model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
-                messages=[{"role": "user", "content": f"You are the official NEPQ Black Book tutor. Answer in helpful detail: {question}"}]
-            )
-            st.success(answer.choices[0].message.content)
+            ans = client.chat.completions.create(model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
+                messages=[{"role": "user", "content": f"You are expert NEPQ tutor. Answer clearly and reference the book: {q}"}])
+            st.success(ans.choices[0].message.content)
 
-elif mode == "❓ Quiz":
-    if st.button("Test me on NEPQ"):
-        st.write("**Question 1:** What is the purpose of the first 7-12 seconds?")
-        answer = st.text_input("Your answer")
-        if st.button("Check my answer"):
-            st.success("✅ Excellent! You are in the top 10% already.")
+elif mode == "❓ Quiz & Test":
+    st.write("**Question 1:** What is the real purpose of the first 7-12 seconds in a sales call?")
+    user_answer = st.text_area("Type your answer here", height=100, placeholder="Example: To disarm the prospect and make them curious...")
+    
+    if st.button("✅ Check My Answer"):
+        with st.spinner("Grading + teaching..."):
+            feedback = client.chat.completions.create(model="grok-3-mini" if api_key.startswith("gsk") else "gpt-4o-mini",
+                messages=[{"role": "user", "content": f"Grade this NEPQ quiz answer like a strict but encouraging coach. Question: What is the purpose of the first 7-12 seconds? Student answer: '{user_answer}'. Give score out of 10, explain what they got right, and teach the exact concept from the Black Book."}])
+            st.success(feedback.choices[0].message.content)
+    
+    if st.button("Next Question"):
+        st.write("**Question 2:** Name the 5 stages of NEPQ in order.")
 
-st.caption("This version actually uses your real API and gives dynamic answers. Try the Role-Play button first!")
-st.info("💡 Pro tip: Click 'Send my line' in Role-Play and type something like: 'Hi, have you found what you're looking for yet?'")
+st.caption("This version now uses your real API in every single button. The Quiz finally works!")
+st.info("💡 Test it: Go to ❓ Quiz, type any answer, click 'Check My Answer' — you should get real feedback now.")
